@@ -1,0 +1,32 @@
+{
+  "name": "gulp-stylist",
+  "version": "1.0.0",
+  "description": "Gulp plugin for stylist",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tunderdomb/gulp-stylist.git"
+  },
+  "keywords": [
+    "css",
+    "selector",
+    "extracting",
+    "gulpplugin"
+  ],
+  "author": "Nagy Zoltan <tunderdomb@gmail.com> (tunderdomb)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tunderdomb/gulp-stylist/issues"
+  },
+  "homepage": "https://github.com/tunderdomb/gulp-stylist",
+  "dependencies": {
+    "stylist": "1.0.2",
+    "through2": "0.5.1",
+    "glob": "4.0.4",
+    "mkdirp": "0.5.0",
+    "gulp-util": "2.2.20"
+  },
+  "devDependencies": {
+    "gulp": "~3.8.6"
+  }
+}
