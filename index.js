@@ -63,7 +63,6 @@ module.exports.extract = function extract( options ){
     this.push(cssFile)
     done()
   }, function (){
-    ignoresCollected = false
     if ( selectorCount ) {
       console.log("new selectors:")
       for( var filePath in stats ){
@@ -73,6 +72,9 @@ module.exports.extract = function extract( options ){
     else {
       console.log("no new selectors")
     }
+    ignoresCollected = false
+    selectorCount = 0
+    stats = {}
     this.emit("end")
   })
 }

@@ -1,6 +1,6 @@
 {
   "name": "gulp-stylist",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Gulp plugin for stylist",
   "main": "index.js",
   "repository": {
