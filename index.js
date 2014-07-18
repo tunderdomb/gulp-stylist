@@ -29,6 +29,7 @@ module.exports.extract = function extract( options ){
 
   var ignoresCollected = false
   var selectorCount = 0
+  var stats = {}
 
   return through.obj(function ( file, enc, done ){
     if ( file.isNull() ) return // ignore
@@ -48,6 +49,7 @@ module.exports.extract = function extract( options ){
 
     if ( !selectors.length ) return done()
 
+    stats[file.path.replace(file.base, "")] = selectors.length
     selectorCount += selectors.length
     var cssString = gutil.linefeed + selectors.join(gutil.linefeed)
     var destPath = gutil.replaceExtension(file.path, "." + (options.style || "css"))
@@ -62,7 +64,15 @@ module.exports.extract = function extract( options ){
     done()
   }, function (){
     ignoresCollected = false
-    console.log("extracted %d selectors", selectorCount)
+    if ( selectorCount ) {
+      console.log("new selectors:")
+      for( var filePath in stats ){
+        console.log("%s (%d)", filePath, stats[filePath])
+      }
+    }
+    else {
+      console.log("no new selectors")
+    }
     this.emit("end")
   })
 }
