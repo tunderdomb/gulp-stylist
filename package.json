@@ -1,6 +1,6 @@
 {
   "name": "gulp-stylist",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Gulp plugin for stylist",
   "main": "index.js",
   "repository": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/tunderdomb/gulp-stylist",
   "dependencies": {
-    "stylist": "1.0.2",
+    "stylist": "1.0.3",
     "through2": "0.5.1",
     "glob": "4.0.4",
     "mkdirp": "0.5.0",
