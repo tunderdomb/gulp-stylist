@@ -1,6 +1,8 @@
 var path = require("path")
 var fs = require("fs")
 
+var async = require("async")
+
 var gutil = require("gulp-util")
 var cyan = gutil.colors.cyan
 var File = gutil.File;
@@ -14,7 +16,7 @@ var mkdirp = require("mkdirp")
 
 var cwd = process.cwd()
 
-module.exports = {}
+module.exports = createPlugin
 
 function clone( obj ){
   var clone = {}
@@ -24,18 +26,38 @@ function clone( obj ){
   return clone
 }
 
-function getExisting( pattern ){
-  if ( !pattern ) return ""
-  return glob.sync(pattern).map(function ( src ){
-    return fs.readFileSync(path.join(process.cwd(), src), "utf8") || ""
-  }).join("\n")
+function getExisting( pattern, existing, cb ){
+  fs.readFile(existing, "utf8", function ( err, content ){
+    var existingContent = err ? "" : content
+    if ( !pattern ) {
+      cb(existingContent)
+      return
+    }
+    glob(pattern, function ( err, files ){
+      if ( err ) {
+        cb(existingContent)
+        return
+      }
+      async.map(files, function ( src, next ){
+        fs.readFile(src, "utf8", function ( err, content ){
+          next(null, err ? "" : content)
+        })
+      }, function ( err, files ){
+        cb(existingContent + files.join("\n"))
+      })
+    })
+  })
 }
 
-module.exports.extract = function extract( options ){
-  if ( !options ) options = {}
-
+function createPlugin( destDir, options ){
+  if ( typeof destDir == "string" ) {
+    options = options || {}
+  }
+  else if ( !options ) {
+    options = destDir || {}
+    destDir = ""
+  }
   var ignorePattern = options.ignore
-
   // closed in a watcher this prevents the options object to stagnate
   var opt = clone(options)
 
@@ -43,48 +65,47 @@ module.exports.extract = function extract( options ){
     if ( file.isNull() ) return // ignore
     if ( file.isStream() ) return this.emit("error", new PluginError("gulp-concat", "Streaming not supported"))
 
+    var dest = destDir
+      ? path.join(file.cwd, destDir, file.path.replace(file.base, ""))
+      : file.path
+    dest = gutil.replaceExtension(dest, "." + (options.style || "css"))
+
+    var stream = this
+
     // unfortunately we have to read everything in on each run to avoid duplicates
     // caching would defeat the purpose of the whole module
-    opt.ignore = getExisting(ignorePattern)
+    getExisting(ignorePattern, dest, function ( ignored ){
+      opt.ignore = ignored
 
-    var content = file.contents.toString()
-    var selectors = stylist.extract(content, opt)
+      var content = file.contents.toString()
+      var selectors = stylist.extract(content, opt)
 
-    if ( !selectors.length ) return done()
+      if ( !selectors.length ) return done()
 
-    var cssString = gutil.linefeed + selectors.join(gutil.linefeed)
-    var destPath = gutil.replaceExtension(file.path, "." + (opt.style || "css"))
-    var cssFile = new File({
-      cwd: file.cwd,
-      base: file.base,
-      path: destPath,
-      contents: new Buffer(cssString)
-    })
+      var cssString = gutil.linefeed + selectors.join(gutil.linefeed)
+      var cssFile = new File({
+        cwd: file.cwd,
+        base: file.base,
+        path: dest,
+        contents: new Buffer(cssString)
+      })
 
-    gutil.log("Extracted "
-      + cyan(selectors.length)
-      + " selectors from "
-      + cyan(destPath.replace(file.cwd, "")))
+      gutil.log("Extracted "
+        + cyan(selectors.length)
+        + " selectors from "
+        + cyan(file.path.replace(file.cwd, "")))
 
-    this.push(cssFile)
-    done()
-  })
-}
+      stream.push(cssFile)
 
-module.exports.append = function append( destDir ){
-  return through.obj(function ( file, enc, done ){
-    if ( file.isNull() ) return // ignore
-    if ( file.isStream() ) return this.emit("error", new PluginError("gulp-concat", "Streaming not supported"))
-    this.push(file)
-    var dest = path.join(file.cwd, destDir, file.path.replace(file.base, ""))
-    mkdirp(path.dirname(dest), function ( err ){
-      if ( err ) done(err)
-      else fs.appendFile(dest, file.contents, function ( err ){
+      mkdirp(path.dirname(dest), function ( err ){
         if ( err ) done(err)
-        else {
-          gutil.log("Appended to " + cyan(dest.replace(file.cwd, "")))
-          done()
-        }
+        else fs.appendFile(dest, cssString, function ( err ){
+          if ( err ) done(err)
+          else {
+            gutil.log("Appended to " + cyan(dest.replace(file.cwd, "")))
+            done()
+          }
+        })
       })
     })
   })

@@ -4,8 +4,10 @@ var stylist = require("./index")
 gulp.task("default", function(  ){
 
   gulp.src("test/view/**/*.dust")
-    .pipe(stylist.extract({
+    .pipe(stylist("test/style/", {
       ignore: "test/style/**/*.css"
     }))
-    .pipe(stylist.append("test/style/"))
+
+  gulp.src("test/view/**/*.dust")
+    .pipe(stylist())
 })
